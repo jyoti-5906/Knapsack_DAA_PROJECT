@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Knapsack Calculator: Fractional vs 0/1</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#E4EAEF;--ink:#14213D;--muted:#5A6A7E;--line:#CBD5DE;--soft:#F2F5F8;--g:#0F8B8D;--d:#E8630A;--bad:#B3261E;
+--head:'Barlow Condensed','Arial Narrow',sans-serif;--body:'Work Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--body)}
+.wrap{max-width:980px;margin:0 auto;padding:0 18px}
+header{background:var(--ink);color:#fff;padding:38px 0 46px;position:relative}
+header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;background:repeating-linear-gradient(-45deg,#F2B705 0 14px,var(--ink) 14px 28px)}
+h1{font:700 clamp(2.2rem,6vw,3.6rem)/1 var(--head);margin:0 0 10px}
+header p{margin:0;color:#C9D3E3;max-width:60ch}
+main{display:grid;gap:20px;padding:24px 18px 40px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px 24px}
+h2{font:700 1.7rem/1.1 var(--head);margin:0 0 12px}
+h3{font:700 1.3rem/1.2 var(--head);margin:18px 0 6px}
+.grid{display:grid;grid-template-columns:1fr 1fr 160px;gap:16px}
+label{display:block;font-weight:600;margin-bottom:4px}
+small.h{display:block;color:var(--muted);font-weight:400;font-size:.85rem}
+input{width:100%;font:inherit;color:var(--ink);border:1.5px solid var(--line);border-radius:7px;padding:10px 12px}
+input:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px #F2B70566}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{font:600 .95rem var(--body);padding:11px 20px;border-radius:7px;border:1.5px solid var(--ink);cursor:pointer}
+button.p{background:var(--ink);color:#fff}button.p:hover{background:#22345F}
+button.s{background:#fff;color:var(--ink);border-color:var(--line)}button.s:hover{border-color:var(--ink)}
+button:focus-visible{outline:3px solid #F2B705;outline-offset:2px}
+.err{color:var(--bad);font-weight:500;margin:12px 0 0;min-height:1.4em}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.res .card{border-top-width:6px}
+.res .g{border-top-color:var(--g)}.res .d{border-top-color:var(--d)}
+.big{font:700 3.2rem/1 var(--head);margin:4px 0 2px}
+.g .big{color:var(--g)}.d .big{color:var(--d)}
+.sub{color:var(--muted);margin:0 0 14px}
+.ts{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:.82rem;padding:6px 8px;border-bottom:2px solid var(--ink);white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td.n,th.n{text-align:right}
+tr.out td{color:#9AA7B6}
+.tag{font-size:.75rem;font-weight:600;background:#FFF3C4;color:#6B5200;border-radius:4px;padding:1px 6px;margin-left:6px}
+.dpt td,.dpt th{text-align:center;padding:5px 7px}
+.dpt td.l,.dpt th.l{text-align:left;font-weight:600}
+.dpt td.hit{background:#FFE3CF;font-weight:700;color:#8A3A00}
+.note{background:var(--soft);border-left:6px solid var(--ink);border-radius:6px;padding:12px 16px;margin-top:16px}
+.theory p,.theory li{max-width:75ch}
+.theory ol{padding-left:22px;margin:6px 0}
+code{background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:.9em}
+pre{background:var(--ink);color:#E7EDF7;border-radius:8px;padding:14px 16px;overflow-x:auto;font-size:.88rem;line-height:1.5;margin:8px 0}
+.cmp th,.cmp td{white-space:normal}
+@media(max-width:760px){.grid,.res{grid-template-columns:1fr}.card{padding:18px 16px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>Knapsack calculator</h1>
+<p>Enter weights, profits and the capacity. See the maximum profit from the Fractional (Greedy) knapsack and the 0/1 (Dynamic Programming) knapsack, with the working.</p>
+</div></header>
+
+<main class="wrap">
+<section class="card">
+<h2>Enter your values</h2>
+<div class="grid">
+<div><label for="w">Weights <small class="h">Whole numbers, separated by commas</small></label><input id="w" value="10, 20, 30"></div>
+<div><label for="p">Profits <small class="h">Same number of values, separated by commas</small></label><input id="p" value="60, 100, 120"></div>
+<div><label for="c">Capacity <small class="h">Whole number</small></label><input id="c" type="number" min="1" step="1" value="50"></div>
+</div>
+<div class="row">
+<button class="p" id="go">Calculate</button>
+<button class="s" id="ex1">Example 1</button>
+<button class="s" id="ex2">Example 2</button>
+</div>
+<p class="err" id="err" role="alert"></p>
+</section>
+
+<div id="out" hidden>
+<section class="res">
+<article class="card g"><h2>Fractional knapsack (Greedy)</h2>
+<div class="big" id="gp"></div><p class="sub">maximum profit, items can be split</p>
+<div class="ts"><table id="gt"></table></div></article>
+<article class="card d"><h2>0/1 knapsack (Dynamic Programming)</h2>
+<div class="big" id="dp"></div><p class="sub" id="dsub"></p>
+<div class="ts"><table id="dt"></table></div></article>
+</section>
+<section class="card" style="margin-top:20px"><h2>DP table</h2>
+<p class="sub" id="dpnote"></p>
+<div class="ts"><table class="dpt" id="dpt"></table></div>
+<div class="note" id="cmp"></div></section>
+</div>
+
+<section class="card theory">
+<h2>Theory</h2>
+<h3>The knapsack problem</h3>
+<p>There are <b>n</b> items. Item <b>i</b> has a weight <code>w<sub>i</sub></code> and a profit <code>p<sub>i</sub></code>. A knapsack holds at most weight <b>W</b>. Choose items so that the total profit is as large as possible and the total weight stays within W.</p>
+
+<h3>Fractional knapsack (Greedy method)</h3>
+<p>Items can be broken into parts, so a fraction of an item gives the same fraction of its profit. The greedy choice is to take items with the best profit per unit weight first.</p>
+<ol>
+<li>Compute the ratio <code>p<sub>i</sub> / w<sub>i</sub></code> for every item.</li>
+<li>Sort the items by ratio, highest first.</li>
+<li>Take whole items while they fit.</li>
+<li>For the first item that does not fit, take the fraction <code>(remaining capacity) / w<sub>i</sub></code> and stop.</li>
+</ol>
+<p><b>Time:</b> O(n log n) because of sorting. <b>Space:</b> O(n). <b>Optimal:</b> yes, for the fractional problem.</p>
+
+<h3>0/1 knapsack (Dynamic Programming)</h3>
+<p>Each item is taken completely or not at all. Greedy can fail here, so we use a table. Let <code>K[i][c]</code> be the best profit using the first i items with capacity c.</p>
+<pre>K[0][c] = 0,  K[i][0] = 0
+if w_i &gt; c :  K[i][c] = K[i-1][c]
+else        :  K[i][c] = max( K[i-1][c],  p_i + K[i-1][c - w_i] )</pre>
+<p>The answer is <code>K[n][W]</code>. To find which items were chosen, start at <code>K[n][W]</code> and move up: if <code>K[i][c] &ne; K[i-1][c]</code>, item i was taken, so subtract its weight from c.</p>
+<p><b>Time:</b> O(n &times; W). <b>Space:</b> O(n &times; W) (O(W) if you only need the profit). It is called pseudo-polynomial because it depends on the value of W, not just on n.</p>
+
+<h3>Comparison</h3>
+<div class="ts"><table class="cmp">
+<tr><th></th><th>Fractional (Greedy)</th><th>0/1 (DP)</th></tr>
+<tr><td>Items can be split</td><td>Yes</td><td>No</td></tr>
+<tr><td>Method</td><td>Greedy, by profit/weight</td><td>Dynamic programming table</td></tr>
+<tr><td>Time</td><td>O(n log n)</td><td>O(n &times; W)</td></tr>
+<tr><td>Space</td><td>O(n)</td><td>O(n &times; W)</td></tr>
+<tr><td>Optimal?</td><td>Yes for fractional</td><td>Yes for 0/1</td></tr>
+<tr><td>Greedy works on it?</td><td>Yes</td><td>No, it can give a wrong answer</td></tr>
+</table></div>
+<p>The fractional profit is always greater than or equal to the 0/1 profit, because splitting items gives more freedom. In the classic example (weights 10, 20, 30, profits 60, 100, 120, capacity 50) fractional gives 240 and 0/1 gives 220.</p>
+</section>
+</main>
+
+<script>
+const $=s=>document.querySelector(s);
+const fmt=n=>Number.isInteger(n)?String(n):(Math.round(n*100)/100).toString();
+const nums=s=>s.split(/[\s,]+/).filter(Boolean).map(Number);
+
+function calc(){
+  const err=$('#err');err.textContent='';
+  const w=nums($('#w').value),p=nums($('#p').value),W=Number($('#c').value);
+  const fail=m=>{err.textContent=m;$('#out').hidden=true;};
+  if(!w.length)return fail('Enter at least one weight.');
+  if(w.length!==p.length)return fail('You entered '+w.length+' weights and '+p.length+' profits. They must be the same count.');
+  if([...w,...p,W].some(x=>!isFinite(x)))return fail('Use numbers only, separated by commas.');
+  if(w.some(x=>!Number.isInteger(x)||x<1))return fail('Weights must be whole numbers of 1 or more.');
+  if(p.some(x=>x<0))return fail('Profits cannot be negative.');
+  if(!Number.isInteger(W)||W<1)return fail('Capacity must be a whole number of 1 or more.');
+  if(w.length>200||w.length*W>2000000)return fail('Input too large. Use fewer items or a smaller capacity.');
+  const n=w.length;
+
+  /* Fractional (greedy) */
+  const order=[...w.keys()].sort((a,b)=>p[b]/w[b]-p[a]/w[a]);
+  let left=W,gProfit=0;const take=Array(n).fill(0);
+  for(const i of order){if(left<=0)break;const f=Math.min(1,left/w[i]);take[i]=f;left-=w[i]*f;gProfit+=p[i]*f;}
+  $('#gp').textContent=fmt(gProfit);
+  $('#gt').innerHTML='<tr><th>Item</th><th class="n">Weight</th><th class="n">Profit</th><th class="n">Profit/weight</th><th class="n">Fraction taken</th><th class="n">Profit gained</th></tr>'+
+    order.map(i=>`<tr class="${take[i]?'':'out'}"><td>Item ${i+1}</td><td class="n">${w[i]}</td><td class="n">${p[i]}</td><td class="n">${fmt(p[i]/w[i])}</td><td class="n">${take[i]===1?'1 (whole)':take[i]===0?'0':fmt(take[i])+' ('+fmt(take[i]*w[i])+' of '+w[i]+')'}</td><td class="n">${fmt(take[i]*p[i])}</td></tr>`).join('')+
+    `<tr><td colspan="5"><b>Total</b> (rows sorted by ratio)</td><td class="n"><b>${fmt(gProfit)}</b></td></tr>`;
+
+  /* 0/1 (DP table) */
+  const K=Array.from({length:n+1},()=>new Array(W+1).fill(0));
+  for(let i=1;i<=n;i++)for(let c=0;c<=W;c++){
+    K[i][c]=K[i-1][c];
+    if(w[i-1]<=c){const v=p[i-1]+K[i-1][c-w[i-1]];if(v>K[i][c])K[i][c]=v;}
+  }
+  const dProfit=K[n][W];const chosen=[];const path=new Set();
+  let c=W;
+  for(let i=n;i>=1;i--){path.add(i+','+c);if(K[i][c]!==K[i-1][c]){chosen.push(i-1);c-=w[i-1];}}
+  chosen.reverse();
+  const used=chosen.reduce((s,i)=>s+w[i],0);
+  $('#dp').textContent=fmt(dProfit);
+  $('#dsub').textContent='maximum profit, items taken whole';
+  $('#dt').innerHTML='<tr><th>Item</th><th class="n">Weight</th><th class="n">Profit</th><th>Chosen?</th></tr>'+
+    w.map((x,i)=>`<tr class="${chosen.includes(i)?'':'out'}"><td>Item ${i+1}</td><td class="n">${x}</td><td class="n">${p[i]}</td><td>${chosen.includes(i)?'Yes':'No'}</td></tr>`).join('')+
+    `<tr><td><b>Total</b></td><td class="n"><b>${used}</b></td><td class="n"><b>${fmt(dProfit)}</b></td><td></td></tr>`;
+
+  const showT=W<=40&&n<=15;
+  $('#dpnote').textContent=showT?'Rows are items, columns are capacities 0 to '+W+'. Shaded cells are the trace-back path that finds the chosen items.':'The table is hidden because it would be too wide (shown for capacity up to 40 and up to 15 items).';
+  $('#dpt').innerHTML=showT?'<tr><th class="l">i \\ c</th>'+Array.from({length:W+1},(_,c)=>`<th>${c}</th>`).join('')+'</tr>'+
+    K.map((row,i)=>`<tr><td class="l">${i===0?'0 (none)':'Item '+i+' (w='+w[i-1]+', p='+p[i-1]+')'}</td>`+row.map((v,c)=>`<td class="${path.has(i+','+c)?'hit':''}">${v}</td>`).join('')+'</tr>').join(''):'';
+
+  const gap=gProfit-dProfit;
+  $('#cmp').innerHTML=Math.abs(gap)<1e-9
+    ?'Both methods give the same profit, <b>'+fmt(dProfit)+'</b>.'
+    :'Fractional gives <b>'+fmt(gProfit)+'</b> and 0/1 gives <b>'+fmt(dProfit)+'</b>. The difference of <b>'+fmt(gap)+'</b> exists because the fractional method splits an item, which the 0/1 problem does not allow.';
+  $('#out').hidden=false;
+}
+
+$('#go').addEventListener('click',calc);
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName==='INPUT')calc();});
+const set=(w,p,c)=>{$('#w').value=w;$('#p').value=p;$('#c').value=c;calc();};
+$('#ex1').addEventListener('click',()=>set('10, 20, 30','60, 100, 120',50));
+$('#ex2').addEventListener('click',()=>set('5, 4, 6, 3','10, 40, 30, 50',10));
+calc();
+</script>
+</body>
+</html>
