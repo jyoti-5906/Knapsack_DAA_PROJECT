@@ -26,3 +26,15 @@ The application allows users to add items with their weight and profit, set a kn
 - Fractional Knapsack
 - 0/1 Knapsack
 - Algorithm Comparison
+
+## How to Run
+
+1.Clone the repository.
+
+2.Open the project folder in the terminal.
+
+3.Run:
+
+python app.py
+
+4.Open the local website at http://localhost:8000.
